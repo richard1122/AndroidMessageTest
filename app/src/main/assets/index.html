@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>WebMessage Test</title>
+    <style>
+      body {
+        background-color: yellow;
+      }
+    </style>
+    <script>
+      let port;
+      let messageCount = 0;
+      window.onmessage = function(e) {
+        console.log('onmessage', e);
+        if (e.data === 'port') {
+          port = e.ports[0];
+          port.onmessage = function(e) {
+            ++messageCount;
+            if (messageCount % 5000 == 0) {
+              console.log('messageCount', messageCount);
+              host.postMessage(`port-message-count: ${messageCount}`)
+            }
+          };
+          host.postMessage('background-port');
+        }
+      };
+      host.postMessage('background-prepare');
+    </script>
+  </head>
+  <body>
+    <h1>This is WebView!</h1>
+  </body>
+</html>
