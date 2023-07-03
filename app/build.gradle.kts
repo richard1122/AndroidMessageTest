@@ -58,6 +58,7 @@ dependencies {
     implementation(libs.androidx.constraint.layout)
     implementation(libs.androidx.webkit)
     implementation(libs.activity.compose)
+    implementation(libs.guava)
     implementation(platform(libs.compose.bom))
     implementation(libs.ui)
     implementation(libs.ui.graphics)

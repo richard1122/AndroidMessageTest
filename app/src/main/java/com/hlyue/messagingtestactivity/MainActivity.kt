@@ -25,9 +25,11 @@ import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewAssetLoader.AssetsPathHandler
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewCompat.WebMessageListener
+import com.google.common.io.BaseEncoding
 import com.hlyue.messagingtestactivity.databinding.LayoutWebviewBinding
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import kotlin.random.Random
 
 
 class MainActivity : ComponentActivity() {
@@ -59,7 +61,7 @@ class MainActivity : ComponentActivity() {
         binding.webview.settings.javaScriptEnabled = true
         WebView.setWebContentsDebuggingEnabled(true)
         binding.webview.loadUrl("https://${WebViewAssetLoader.DEFAULT_DOMAIN}/assets/index.html")
-        vm.loggingString.set(getWebViewVersion(this))
+        vm.loggingString.set(getWebViewVersion(this) + '\n')
         WebViewCompat.addWebMessageListener(binding.webview, "host", setOf("*"), object : WebMessageListener {
             override fun onPostMessage(
                 view: WebView,
@@ -90,7 +92,7 @@ class MainActivity : ComponentActivity() {
         private val backgroundHandler by lazy { Handler(backgroundThread.looper) }
         private lateinit var backgroundPort: WebMessagePort
         private var messageHandler: WebMessageCallback? = null
-        private val expectedMessageCount = 100000
+        private var expectedMessageCount = 0
         init {
             backgroundThread.start()
         }
@@ -112,12 +114,16 @@ class MainActivity : ComponentActivity() {
         }
 
         fun hostPostMessage() {
+            val dataString = BaseEncoding.base64Url().encode(Random.nextBytes(2000))
             assert(this::backgroundPort.isInitialized) { "Background port should be set" }
             Log.e(TAG, "hostPostMessage")
-            Debug.startMethodTracingSampling("new", 8 * 1024 * 1024, 100)
-            backgroundHandler.post {
-                (1..expectedMessageCount).forEach { backgroundPort.postMessage(WebMessage("Count: $it")) }
-            }
+            Debug.startMethodTracingSampling("new", 8 * 1024 * 1024, 10)
+            (1..1000).forEach { backgroundHandler.postDelayed({
+                (1..20).forEach {
+                    backgroundPort.postMessage(WebMessage("Count: $dataString $it"))
+                    ++expectedMessageCount
+                }
+            }, it.toLong()) }
         }
 
         fun hostPostMessageDone(message: String) {
